@@ -1,0 +1,673 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta http-equiv="X-UA-Compatible" content="ie=edge">
+    <title>Document</title>
+
+    <link rel="stylesheet" type="text/css" href="test.css">
+
+    <script src="C:\Users\Asus\Desktop\blockchain\eth-proj\node_modules\web3\dist\web3.min.js"></script>
+    <!-- C:\Users\Asus\Desktop\blockchain\eth-proj\node_modules\web3 -->
+
+</head>
+<body>
+    <div class="container">
+
+		<h1>Blockchain Energy Management</h1>
+		<span id="insTrans"></span>
+		<hr>
+
+		<span id="hashNum"></span>
+        <hr>
+        
+        <div class="row">
+            <div class="column" style="background-color:#aaa;">
+              <!-- <h2>Column 1</h2> -->
+              <!-- <p>Some text..</p> -->
+              
+                <label for="production" class="col-lg-2 control-label">Production</label>
+                <h2 id="production"></h2>
+
+                <label for="consumption" class="col-lg-2 control-label">Consumption</label>
+                <h2 id="consumption"></h2>
+
+                <label for="energyState" class="col-lg-2 control-label">Energy state</label>
+                <h2 id="energyState"></h2>
+
+                <label for="capacity" class="col-lg-2 control-label">Energy Storage capacity</label>
+                <h2 id="capacity"></h2>
+        
+            </div>
+            <div class="column" style="background-color:#bbb;">
+              <!-- <h2>Column 2</h2> -->
+              <!-- <p>Some text..</p> -->
+              <label for="capacityLoad" class="col-lg-2 control-label">Energy Storage capacity load</label>
+              <h2 id="capacityLoad"></h2>
+      
+              <label for="overgeneration" class="col-lg-2 control-label">Overgeneration</label>
+              <h2 id="overgeneration"></h2>
+      
+              <label for="energyLack" class="col-lg-2 control-label">Lack of energy</label>
+              <h2 id="energyLack"></h2>
+      
+              <button id="button">Update</button>
+            </div>
+          </div>
+
+
+
+
+
+    </div>
+
+    <script src="https://code.jquery.com/jquery-3.2.1.slim.min.js"></script>
+
+    <script>
+    	var options = {
+    		timeout: 20000, // milliseconds,
+    		headers: [{name: 'Access-Control-Allow-Origin', value: '*'}]};
+
+    </script>
+
+    <script>
+
+       if (typeof web3 !== 'undefined') {
+            web3 = new Web3(web3.currentProvider);
+        } else {
+            // set the provider you want from Web3.providers
+            web3 = new Web3(new Web3.providers.HttpProvider("http://localhost:8545", options));
+        }
+
+        web3.eth.defaultAccount = web3.eth.accounts[0];
+
+        var EnergyManagementContract = web3.eth.contract([
+	{
+		"constant": true,
+		"inputs": [
+			{
+				"name": "",
+				"type": "address"
+			},
+			{
+				"name": "",
+				"type": "uint256"
+			}
+		],
+		"name": "ownerToSmartMeterIdMap",
+		"outputs": [
+			{
+				"name": "",
+				"type": "uint256"
+			}
+		],
+		"payable": false,
+		"stateMutability": "view",
+		"type": "function"
+	},
+	{
+		"constant": true,
+		"inputs": [],
+		"name": "getEnergyLack",
+		"outputs": [
+			{
+				"name": "",
+				"type": "int256"
+			}
+		],
+		"payable": false,
+		"stateMutability": "view",
+		"type": "function"
+	},
+	{
+		"constant": true,
+		"inputs": [
+			{
+				"name": "",
+				"type": "uint256"
+			}
+		],
+		"name": "storagesMap",
+		"outputs": [
+			{
+				"name": "owner",
+				"type": "address"
+			},
+			{
+				"name": "capacity",
+				"type": "uint256"
+			}
+		],
+		"payable": false,
+		"stateMutability": "view",
+		"type": "function"
+	},
+	{
+		"constant": true,
+		"inputs": [
+			{
+				"name": "",
+				"type": "uint256"
+			}
+		],
+		"name": "ownersOfStorageArray",
+		"outputs": [
+			{
+				"name": "",
+				"type": "address"
+			}
+		],
+		"payable": false,
+		"stateMutability": "view",
+		"type": "function"
+	},
+	{
+		"constant": true,
+		"inputs": [
+			{
+				"name": "",
+				"type": "uint256"
+			}
+		],
+		"name": "smartMetersArray",
+		"outputs": [
+			{
+				"name": "owner",
+				"type": "address"
+			},
+			{
+				"name": "place",
+				"type": "string"
+			}
+		],
+		"payable": false,
+		"stateMutability": "view",
+		"type": "function"
+	},
+	{
+		"constant": false,
+		"inputs": [
+			{
+				"name": "_capacity",
+				"type": "uint256"
+			}
+		],
+		"name": "newStorage",
+		"outputs": [
+			{
+				"name": "storageID",
+				"type": "uint256"
+			}
+		],
+		"payable": false,
+		"stateMutability": "nonpayable",
+		"type": "function"
+	},
+	{
+		"constant": false,
+		"inputs": [
+			{
+				"name": "_smID",
+				"type": "uint256"
+			},
+			{
+				"name": "_production",
+				"type": "uint256"
+			},
+			{
+				"name": "_consumption",
+				"type": "uint256"
+			}
+		],
+		"name": "newMetering",
+		"outputs": [
+			{
+				"name": "meteringID",
+				"type": "uint256"
+			}
+		],
+		"payable": false,
+		"stateMutability": "nonpayable",
+		"type": "function"
+	},
+	{
+		"constant": true,
+		"inputs": [
+			{
+				"name": "",
+				"type": "uint256"
+			}
+		],
+		"name": "storagesArray",
+		"outputs": [
+			{
+				"name": "owner",
+				"type": "address"
+			},
+			{
+				"name": "capacity",
+				"type": "uint256"
+			}
+		],
+		"payable": false,
+		"stateMutability": "view",
+		"type": "function"
+	},
+	{
+		"constant": true,
+		"inputs": [],
+		"name": "getOverload",
+		"outputs": [
+			{
+				"name": "",
+				"type": "int256"
+			}
+		],
+		"payable": false,
+		"stateMutability": "view",
+		"type": "function"
+	},
+	{
+		"constant": true,
+		"inputs": [],
+		"name": "getCapacityLoad",
+		"outputs": [
+			{
+				"name": "",
+				"type": "int256"
+			}
+		],
+		"payable": false,
+		"stateMutability": "view",
+		"type": "function"
+	},
+	{
+		"constant": true,
+		"inputs": [],
+		"name": "getConsumption",
+		"outputs": [
+			{
+				"name": "",
+				"type": "int256"
+			}
+		],
+		"payable": false,
+		"stateMutability": "view",
+		"type": "function"
+	},
+	{
+		"constant": true,
+		"inputs": [
+			{
+				"name": "",
+				"type": "uint256"
+			}
+		],
+		"name": "meteringsMap",
+		"outputs": [
+			{
+				"name": "smID",
+				"type": "uint256"
+			},
+			{
+				"name": "timestamp",
+				"type": "uint256"
+			},
+			{
+				"name": "production",
+				"type": "uint256"
+			},
+			{
+				"name": "consumption",
+				"type": "uint256"
+			}
+		],
+		"payable": false,
+		"stateMutability": "view",
+		"type": "function"
+	},
+	{
+		"constant": true,
+		"inputs": [],
+		"name": "getProduction",
+		"outputs": [
+			{
+				"name": "",
+				"type": "int256"
+			}
+		],
+		"payable": false,
+		"stateMutability": "view",
+		"type": "function"
+	},
+	{
+		"constant": true,
+		"inputs": [
+			{
+				"name": "",
+				"type": "address"
+			},
+			{
+				"name": "",
+				"type": "uint256"
+			}
+		],
+		"name": "ownerToStorageIdMap",
+		"outputs": [
+			{
+				"name": "",
+				"type": "uint256"
+			}
+		],
+		"payable": false,
+		"stateMutability": "view",
+		"type": "function"
+	},
+	{
+		"constant": true,
+		"inputs": [
+			{
+				"name": "",
+				"type": "uint256"
+			}
+		],
+		"name": "ownersOfSmartMeterArray",
+		"outputs": [
+			{
+				"name": "",
+				"type": "address"
+			}
+		],
+		"payable": false,
+		"stateMutability": "view",
+		"type": "function"
+	},
+	{
+		"constant": true,
+		"inputs": [],
+		"name": "getEnergyState",
+		"outputs": [
+			{
+				"name": "",
+				"type": "int256"
+			}
+		],
+		"payable": false,
+		"stateMutability": "view",
+		"type": "function"
+	},
+	{
+		"constant": true,
+		"inputs": [],
+		"name": "getCapacity",
+		"outputs": [
+			{
+				"name": "",
+				"type": "int256"
+			}
+		],
+		"payable": false,
+		"stateMutability": "view",
+		"type": "function"
+	},
+	{
+		"constant": false,
+		"inputs": [
+			{
+				"name": "_place",
+				"type": "string"
+			}
+		],
+		"name": "newSmartMeter",
+		"outputs": [
+			{
+				"name": "smartMeterID",
+				"type": "uint256"
+			}
+		],
+		"payable": false,
+		"stateMutability": "nonpayable",
+		"type": "function"
+	},
+	{
+		"constant": true,
+		"inputs": [
+			{
+				"name": "",
+				"type": "uint256"
+			}
+		],
+		"name": "meteringsArray",
+		"outputs": [
+			{
+				"name": "smID",
+				"type": "uint256"
+			},
+			{
+				"name": "timestamp",
+				"type": "uint256"
+			},
+			{
+				"name": "production",
+				"type": "uint256"
+			},
+			{
+				"name": "consumption",
+				"type": "uint256"
+			}
+		],
+		"payable": false,
+		"stateMutability": "view",
+		"type": "function"
+	},
+	{
+		"constant": true,
+		"inputs": [
+			{
+				"name": "",
+				"type": "uint256"
+			}
+		],
+		"name": "smartMetersMap",
+		"outputs": [
+			{
+				"name": "owner",
+				"type": "address"
+			},
+			{
+				"name": "place",
+				"type": "string"
+			}
+		],
+		"payable": false,
+		"stateMutability": "view",
+		"type": "function"
+	},
+	{
+		"anonymous": false,
+		"inputs": [
+			{
+				"indexed": false,
+				"name": "prod",
+				"type": "int256"
+			},
+			{
+				"indexed": false,
+				"name": "cons",
+				"type": "int256"
+			},
+			{
+				"indexed": false,
+				"name": "energy",
+				"type": "int256"
+			}
+		],
+		"name": "energyStateChangedEvent",
+		"type": "event"
+	},
+	{
+		"anonymous": false,
+		"inputs": [
+			{
+				"indexed": false,
+				"name": "totalCapacity",
+				"type": "int256"
+			}
+		],
+		"name": "capacityTotalUpdatedEvent",
+		"type": "event"
+	},
+	{
+		"anonymous": false,
+		"inputs": [
+			{
+				"indexed": false,
+				"name": "capacityLoad",
+				"type": "int256"
+			},
+			{
+				"indexed": false,
+				"name": "overload",
+				"type": "int256"
+			},
+			{
+				"indexed": false,
+				"name": "energyLack",
+				"type": "int256"
+			}
+		],
+		"name": "energyManagementEvent",
+		"type": "event"
+	}
+])
+
+        var EnergyManagement = EnergyManagementContract.at('0xD42f16Dd43C38423ECf5687e94F26b2a6D669F0f');
+
+        console.log(EnergyManagement);
+
+		var blockNumber = web3.eth.blockNumber;
+		var blockHash = web3.eth.getBlock(blockNumber).hash;
+		var timestamp = web3.eth.getBlock(blockNumber).timestamp;
+
+       	var capacityEvent = EnergyManagement.capacityTotalUpdatedEvent();
+	   	var energyEvent = EnergyManagement.energyStateChangedEvent();
+		var energyManagementEvent = EnergyManagement.energyManagementEvent();
+
+        capacityEvent.watch(function(error, result) {
+        	if (!error) {
+				$("#insTrans").html('Block hash: ' + result.blockHash);
+				$("#capacity").html(result.args.totalCapacity + ' ');
+				$("#hashNum").html('Block number: ' + result.blockNumber);
+				console.log(result);
+        	} else {
+        		console.log(error);
+        	}
+        });
+
+		energyEvent.watch(function(error, result) {
+        	if (!error) {
+				$("#insTrans").html('Block hash: ' + result.blockHash);
+				$("#hashNum").html('Block number: ' + result.blockNumber);
+				$("#production").html(result.args.prod + ' ');
+				$("#consumption").html(result.args.cons + ' ');
+				$("#energyState").html(result.args.energy + ' ');
+				console.log(result);
+        	} else {
+        		console.log(error);
+        	}
+        });
+
+		energyManagementEvent.watch(function(error, result) {
+        	if (!error) {
+				$("#insTrans").html('Block hash: ' + result.blockHash);
+				$("#hashNum").html('Block number: ' + result.blockNumber);
+				$("#capacityLoad").html(result.args.capacityLoad + ' ');
+				$("#overgeneration").html(result.args.overload + ' ');
+				$("#energyLack").html(result.args.energyLack + ' ');
+				console.log(result);
+        	} else {
+        		console.log(error);
+        	}
+        });
+
+//___________________________________________________________________________________
+		//button
+        $("button").click(function() {
+			EnergyManagement.getCapacity(function(error, result){
+            if(!error)
+                {
+                    $("#capacity").html(result+' ');
+					$("#insTrans").html('Block hash: ' + blockHash);
+					$("#hashNum").html('Block number: ' + web3.eth.blockNumber);
+                    console.log(result);
+                }
+            else
+                console.error(error);
+        });
+
+		EnergyManagement.getEnergyState(function(error, result){
+            if(!error)
+                {
+                    $("#energyState").html(result+' ');
+                    console.log(result);
+                }
+            else
+                console.error(error);
+        });
+
+		EnergyManagement.getProduction(function(error, result){
+            if(!error)
+                {
+                    $("#production").html(result+' ');
+                    console.log(result);
+                }
+            else
+                console.error(error);
+        });
+
+		EnergyManagement.getConsumption(function(error, result){
+            if(!error)
+                {
+                    $("#consumption").html(result+' ');
+                    console.log(result);
+                }
+            else
+                console.error(error);
+        });
+
+		EnergyManagement.getCapacityLoad(function(error, result){
+            if(!error)
+                {
+                    $("#capacityLoad").html(result+' ');
+                    console.log(result);
+                }
+            else
+                console.error(error);
+        });
+
+						EnergyManagement.getOverload(function(error, result){
+            if(!error)
+                {
+                    $("#overgeneration").html(result+' ');
+                    console.log(result);
+                }
+            else
+                console.error(error);
+        });
+
+		EnergyManagement.getEnergyLack(function(error, result){
+            if(!error)
+                {
+                    $("#energyLack").html(result+' ');
+                    console.log(result);
+                }
+            else
+                console.error(error);
+        });
+        });
+
+    </script>
+
+</body>
+</html>
